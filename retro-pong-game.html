@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="tr">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Advanced Retro Pong Game - Rewards and Effects</title>
+        <style>
+            body {
+                background-color: #000;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                font-family: "Press Start 2P", cursive;
+                color: #fff;
+            }
+            #gameCanvas {
+                border: 4px solid #fff;
+                margin-bottom: 20px;
+            }
+            #score {
+                font-size: 24px;
+                margin-bottom: 10px;
+            }
+            #controls {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 10px;
+            }
+            button {
+                background-color: #4caf50;
+                border: none;
+                color: white;
+                padding: 10px 20px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+                margin: 4px 2px;
+                cursor: pointer;
+                font-family: "Press Start 2P", cursive;
+            }
+            #messages {
+                height: 50px;
+                font-size: 18px;
+                text-align: center;
+            }
+        </style>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body>
+        <div id="score">Player: 0 | TurboAI: 0</div>
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+        <div id="controls">
+            <button id="speedUpBtn">Speed Up</button>
+            <button id="difficultyBtn">Difficulty: Medium</button>
+            <button id="resetBtn">Reset</button>
+        </div>
+        <div id="messages"></div>
+        <script>
+            const canvas = document.getElementById("gameCanvas");
+            const ctx = canvas.getContext("2d");
+            const scoreElement = document.getElementById("score");
+            const messagesElement = document.getElementById("messages");
+            const speedUpBtn = document.getElementById("speedUpBtn");
+            const difficultyBtn = document.getElementById("difficultyBtn");
+            const resetBtn = document.getElementById("resetBtn");
+
+            let difficulty = 1; // 0: Kolay, 1: Orta, 2: Zor
+            let speedMultiplier = 1;
+
+            const playerName = "Player";
+            const aiName = "TurboAI";
+
+            // Oyun nesneleri
+            const ball = {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                radius: 10,
+                speedX: 5,
+                speedY: 5,
+            };
+
+            let paddleHeight = 100;
+            const paddleWidth = 10;
+            const leftPaddle = {
+                y: canvas.height / 2 - paddleHeight / 2,
+                score: 0,
+                transparent: false,
+            };
+            const rightPaddle = {
+                y: canvas.height / 2 - paddleHeight / 2,
+                score: 0,
+                transparent: false,
+            };
+
+            let borderColor = "#FFF";
+            let borderFlashInterval = null;
+
+            // Patlama animasyonu için
+            let explosion = null;
+
+            function createExplosion(x, y) {
+                return {
+                    x: x,
+                    y: y,
+                    radius: 10,
+                    maxRadius: 50,
+                    opacity: 1,
+                };
+            }
+
+            function drawExplosion() {
+                if (explosion) {
+                    ctx.beginPath();
+                    ctx.arc(
+                        explosion.x,
+                        explosion.y,
+                        explosion.radius,
+                        0,
+                        Math.PI * 2,
+                    );
+                    ctx.fillStyle = `rgba(255, 165, 0, ${explosion.opacity})`;
+                    ctx.fill();
+                    ctx.closePath();
+
+                    explosion.radius += 2;
+                    explosion.opacity -= 0.05;
+
+                    if (
+                        explosion.radius >= explosion.maxRadius ||
+                        explosion.opacity <= 0
+                    ) {
+                        explosion = null;
+                    }
+                }
+            }
+
+            // Ödül sistemi
+            const rewards = [
+                {
+                    name: "Shorten Paddle",
+                    action: () => {
+                        paddleHeight = Math.max(50, paddleHeight - 20);
+                    },
+                },
+                {
+                    name: "Extend Paddle",
+                    action: () => {
+                        paddleHeight = Math.min(150, paddleHeight + 20);
+                    },
+                },
+                {
+                    name: "Transparency",
+                    action: (paddle) => {
+                        paddle.transparent = true;
+                        setTimeout(() => {
+                            paddle.transparent = false;
+                        }, 5000);
+                    },
+                },
+                {
+                    name: "Change Color",
+                    action: () => {
+                        if (borderFlashInterval)
+                            clearInterval(borderFlashInterval);
+                        borderFlashInterval = setInterval(() => {
+                            borderColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                        }, 100);
+                        setTimeout(() => {
+                            clearInterval(borderFlashInterval);
+                            borderColor = "#FFF";
+                        }, 5000);
+                    },
+                },
+            ];
+
+            function applyRandomReward(paddle) {
+                const reward =
+                    rewards[Math.floor(Math.random() * rewards.length)];
+                reward.action(paddle);
+                messagesElement.textContent = `Reward: ${reward.name}`;
+            }
+
+            // Oyun döngüsü
+            function gameLoop() {
+                // Temizle
+                ctx.fillStyle = "#000";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Orta çizgiyi çiz
+                ctx.setLineDash([5, 15]);
+                ctx.beginPath();
+                ctx.moveTo(canvas.width / 2, 0);
+                ctx.lineTo(canvas.width / 2, canvas.height);
+                ctx.strokeStyle = "#FFF";
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Dış çerçeveyi çiz
+                ctx.strokeStyle = borderColor;
+                ctx.lineWidth = 4;
+                ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+                // Top hareketi
+                ball.x += ball.speedX * speedMultiplier;
+                ball.y += ball.speedY * speedMultiplier;
+
+                // Top çarpışma kontrolleri
+                if (
+                    ball.y + ball.radius > canvas.height ||
+                    ball.y - ball.radius < 0
+                ) {
+                    ball.speedY = -ball.speedY;
+                }
+
+                // Raketlerle çarpışma
+                if (
+                    ball.x - ball.radius < paddleWidth &&
+                    ball.y > leftPaddle.y &&
+                    ball.y < leftPaddle.y + paddleHeight
+                ) {
+                    ball.speedX = -ball.speedX;
+                    ball.speedX *= 1.05;
+                    ball.speedY *= 1.05;
+                    applyRandomReward(leftPaddle);
+                } else if (
+                    ball.x + ball.radius > canvas.width - paddleWidth &&
+                    ball.y > rightPaddle.y &&
+                    ball.y < rightPaddle.y + paddleHeight
+                ) {
+                    ball.speedX = -ball.speedX;
+                    ball.speedX *= 1.05;
+                    ball.speedY *= 1.05;
+                    applyRandomReward(rightPaddle);
+                }
+
+                // Skor kontrolü
+                if (ball.x < 0) {
+                    rightPaddle.score++;
+                    explosion = createExplosion(0, ball.y);
+                    resetBall();
+                } else if (ball.x > canvas.width) {
+                    leftPaddle.score++;
+                    explosion = createExplosion(canvas.width, ball.y);
+                    resetBall();
+                }
+
+                // Nesneleri çiz
+                drawCircle(ball.x, ball.y, ball.radius, "#FFF");
+                drawPaddle(
+                    0,
+                    leftPaddle.y,
+                    paddleWidth,
+                    paddleHeight,
+                    leftPaddle.transparent,
+                );
+                drawPaddle(
+                    canvas.width - paddleWidth,
+                    rightPaddle.y,
+                    paddleWidth,
+                    paddleHeight,
+                    rightPaddle.transparent,
+                );
+                drawExplosion();
+
+                // Skoru güncelle
+                scoreElement.textContent = `${playerName}: ${leftPaddle.score} | ${aiName}: ${rightPaddle.score}`;
+
+                // Yapay zeka hareketi
+                moveAIPaddle();
+
+                requestAnimationFrame(gameLoop);
+            }
+
+            function drawCircle(x, y, radius, color) {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2, true);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            function drawPaddle(x, y, width, height, isTransparent) {
+                ctx.fillStyle = isTransparent
+                    ? "rgba(255, 255, 255, 0.5)"
+                    : "#FFF";
+                ctx.fillRect(x, y, width, height);
+            }
+
+            function resetBall() {
+                ball.x = canvas.width / 2;
+                ball.y = canvas.height / 2;
+                ball.speedX = 5 * (Math.random() > 0.5 ? 1 : -1);
+                ball.speedY = 5 * (Math.random() > 0.5 ? 1 : -1);
+            }
+
+            function moveAIPaddle() {
+                const paddleCenter = rightPaddle.y + paddleHeight / 2;
+                const aiSpeed = 4 + difficulty * 2;
+                if (paddleCenter < ball.y - 35) {
+                    rightPaddle.y += aiSpeed;
+                } else if (paddleCenter > ball.y + 35) {
+                    rightPaddle.y -= aiSpeed;
+                }
+            }
+
+            // Fare kontrolü
+            canvas.addEventListener("mousemove", (e) => {
+                const rect = canvas.getBoundingClientRect();
+                leftPaddle.y = e.clientY - rect.top - paddleHeight / 2;
+            });
+
+            // Hızlandırma butonu
+            speedUpBtn.addEventListener("click", () => {
+                speedMultiplier += 0.2;
+                messagesElement.textContent = `Speed increased! Current speed: ${speedMultiplier.toFixed(1)}x`;
+            });
+
+            // Zorluk seviyesi butonu
+            difficultyBtn.addEventListener("click", () => {
+                difficulty = (difficulty + 1) % 3;
+                const difficultyLevels = ["Easy", "Medium", "Hard"];
+
+                difficultyBtn.textContent = `Difficulty: ${difficultyLevels[difficulty]}`;
+                messagesElement.textContent = `Difficulty level set to ${difficultyLevels[difficulty]}!`;
+            });
+
+            // Sıfırlama butonu
+            resetBtn.addEventListener("click", () => {
+                leftPaddle.score = 0;
+                rightPaddle.score = 0;
+                speedMultiplier = 1;
+                paddleHeight = 100;
+                resetBall();
+                messagesElement.textContent = "Game reset!";
+            });
+
+            // Oyunu başlat
+            gameLoop();
+        </script>
+    </body>
+</html>
