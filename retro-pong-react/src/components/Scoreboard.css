@@ -1,0 +1,63 @@
+.scoreboard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  color: #fff;
+  font-family: "'Press Start 2P', cursive";
+  font-size: 18px;
+  background-color: #111; /* Dark background for the scoreboard itself */
+  border-bottom: 3px solid #fff; /* White border like old arcade games */
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10; /* Ensure it's above the game area but below modals */
+  text-transform: uppercase;
+}
+
+.scoreboard-section {
+  text-align: center;
+  padding: 0 15px;
+}
+
+.scoreboard-label {
+  font-size: 14px;
+  margin-bottom: 5px;
+  color: #aaa; /* Slightly dimmer color for labels */
+}
+
+.scoreboard-value {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.scoreboard-difficulty {
+  position: absolute;
+  bottom: -25px; /* Position below the main scoreboard line */
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  padding: 2px 5px;
+  background-color: #111;
+  border: 1px solid #fff;
+  border-top: none;
+}
+
+/* Responsive adjustments if needed */
+@media (max-width: 600px) {
+  .scoreboard {
+    font-size: 14px;
+    padding: 8px 10px;
+  }
+  .scoreboard-label {
+    font-size: 10px;
+  }
+  .scoreboard-value {
+    font-size: 18px;
+  }
+  .scoreboard-difficulty {
+    font-size: 10px;
+    bottom: -20px;
+  }
+}

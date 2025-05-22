@@ -1,0 +1,85 @@
+.game-messages-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none; /* Allow clicks to pass through to the game area */
+  z-index: 20; /* Above scoreboard and game elements */
+  font-family: "'Press Start 2P', cursive";
+  text-transform: uppercase;
+}
+
+.message {
+  background-color: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 20px;
+  border: 2px solid #fff;
+  text-align: center;
+  box-shadow: 0 0 10px #fff;
+}
+
+.main-message {
+  font-size: 36px;
+  margin-bottom: 20px;
+}
+
+.brief-message {
+  font-size: 24px;
+  position: absolute;
+  top: 60%; /* Position below the main message if both are shown */
+  animation: fadeInOut 2s ease-in-out forwards;
+}
+
+.controls-message {
+  font-size: 14px;
+  position: absolute;
+  bottom: 20px; /* Position at the bottom */
+  background-color: rgba(0,0,0,0.6);
+  padding: 10px;
+  border: 1px solid #fff;
+  line-height: 1.6;
+  max-width: 80%;
+}
+
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(20px); }
+  20% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-20px); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .main-message {
+    font-size: 28px;
+    padding: 15px;
+  }
+  .brief-message {
+    font-size: 20px;
+    padding: 10px;
+  }
+  .controls-message {
+    font-size: 12px;
+    padding: 8px;
+    bottom: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-message {
+    font-size: 20px;
+  }
+  .brief-message {
+    font-size: 16px;
+  }
+  .controls-message {
+    font-size: 10px;
+    line-height: 1.4;
+  }
+}
