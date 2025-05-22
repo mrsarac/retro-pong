@@ -12,6 +12,8 @@ const GAME_WIDTH = 800;
 const GAME_HEIGHT = 600;
 const BASE_PADDLE_WIDTH = 20; // Renamed for clarity
 const BASE_PADDLE_HEIGHT = 100; // Renamed for clarity
+const PADDLE_WIDTH = 20; // Add missing constant
+const PADDLE_HEIGHT = 100; // Add missing constant
 const BALL_SIZE = 15;
 const COLLECTIBLE_SIZE = 20;
 
@@ -32,7 +34,9 @@ const Game = () => {
   const [aiScore, setAiScore] = useState(0);
   const [level, setLevel] = useState(1);
   const [lives, setLives] = useState(3);
-  // const [gameOver, setGameOver] = useState(false); // Replaced by gameState
+  const [gameOver, setGameOver] = useState(false); // Add missing state
+  const [gameMainMessage, setGameMainMessage] = useState('Press Start Game Button!'); // Add missing state
+  const [showControlsMessage, setShowControlsMessage] = useState(true); // Add missing state
   const [gameBriefMessage, setGameBriefMessage] = useState('');
 
   const [gameState, setGameState] = useState('startScreen'); // 'startScreen', 'playing', 'gameOver'
@@ -423,6 +427,7 @@ const Game = () => {
         position={{ x: GAME_WIDTH - PADDLE_WIDTH, y: aiPosition }}
       />}
     </div>
+  </>
   );
 };
 
